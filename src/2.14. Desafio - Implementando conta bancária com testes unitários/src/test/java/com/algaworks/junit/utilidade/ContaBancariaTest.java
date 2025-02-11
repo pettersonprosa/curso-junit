@@ -16,8 +16,9 @@ class ContaBancariaTest {
 
     @Test
     void saqueComValorNuloFalha() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new ContaBancaria(null));
+        ContaBancaria conta = new ContaBancaria(new BigDecimal("22.50"));
+        RuntimeException exception = assertThrows(RuntimeException.class,() -> conta.saque(null));
+        assertEquals(IllegalArgumentException.class, exception.getClass());
     }
 
     @Test
@@ -45,7 +46,7 @@ class ContaBancariaTest {
         ContaBancaria conta = new ContaBancaria(saldoInicial);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> conta.saque(new BigDecimal("500")));
-        assertEquals(exception.getClass().getName(), "java.lang.RuntimeException");
+        assertEquals(IllegalArgumentException.class, exception.getClass());
     }
 
     @Test
