@@ -23,8 +23,7 @@ public class CarrinhoCompra {
 	}
 
 	public List<ItemCarrinhoCompra> getItens() {
-		//TODO deve retornar uma nova lista para que a antiga não seja alterada
-		return null;
+		return new ArrayList<>(itens);
 	}
 
 	public Cliente getCliente() {
@@ -32,42 +31,63 @@ public class CarrinhoCompra {
 	}
 
 	public void adicionarProduto(Produto produto, int quantidade) {
-		//TODO parâmetros não podem ser nulos, deve retornar uma exception
-		//TODO quantidade não pode ser menor que 1
-		//TODO deve incrementar a quantidade caso o produto já exista
+		Objects.requireNonNull(produto);
+		validarQuantidade(quantidade);
+
+		encontrarItemPeloProduto(produto)
+				.ifPresentOrElse(
+						item -> item.adicionarQuantidade(quantidade),
+						() -> itens.add(new ItemCarrinhoCompra(produto, quantidade)));
 	}
 
 	public void removerProduto(Produto produto) {
-		//TODO parâmetro não pode ser nulo, deve retornar uma exception
-		//TODO caso o produto não exista, deve retornar uma exception
-		//TODO deve remover o produto independente da quantidade
+		Objects.requireNonNull(produto);
+		boolean produtoRemovido = itens.removeIf(item -> item.getProduto().equals(produto));
+		if (!produtoRemovido) throw new IllegalArgumentException("Produto não encontrado no carrinho de compras");
 	}
 
 	public void aumentarQuantidadeProduto(Produto produto) {
-		//TODO parâmetro não pode ser nulo, deve retornar uma exception
-		//TODO caso o produto não exista, deve retornar uma exception
-		//TODO deve aumentar em um quantidade do produto
+		Objects.requireNonNull(produto);
+		ItemCarrinhoCompra item = encontrarItemPeloProduto(produto)
+				.orElseThrow(()-> new IllegalArgumentException("Produto não encontrado no carrinho de compras"));
+		item.adicionarQuantidade(1);
 	}
 
     public void diminuirQuantidadeProduto(Produto produto) {
-		//TODO parâmetro não pode ser nulo, deve retornar uma exception
-		//TODO caso o produto não exista, deve retornar uma exception
-		//TODO deve diminuir em um quantidade do produto, caso tenha apenas um produto, deve remover da lista
+		Objects.requireNonNull(produto);
+		ItemCarrinhoCompra item = encontrarItemPeloProduto(produto)
+				.orElseThrow(()-> new IllegalArgumentException("Produto não encontrado no carrinho de compras"));
+		if (item.getQuantidade() > 1) {
+			item.subtrairQuantidade(1);
+		} else {
+			removerProduto(item.getProduto());
+		}
 	}
 
     public BigDecimal getValorTotal() {
-		//TODO implementar soma do valor total de todos itens
-		return null;
+		return itens.stream()
+				.map(ItemCarrinhoCompra::getValorTotal)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
 	public int getQuantidadeTotalDeProdutos() {
-		//TODO retorna quantidade total de itens no carrinho
-		//TODO Exemplo em um carrinho com 2 itens, com a quantidade 2 e 3 para cada item respectivamente, deve retornar 5
-		return 0;
+		return itens.stream()
+				.map(ItemCarrinhoCompra::getQuantidade)
+				.reduce(0, Integer::sum);
 	}
 
 	public void esvaziar() {
-		//TODO deve remover todos os itens
+		itens.clear();
+	}
+
+	private void validarQuantidade(int quantidade) {
+		if (quantidade < 1) throw new IllegalArgumentException("Quantidade do produto dever ser maior que zero");
+	}
+
+	private Optional<ItemCarrinhoCompra> encontrarItemPeloProduto(Produto produto) {
+		return itens.stream()
+				.filter(item->item.getProduto().equals(produto))
+				.findFirst();
 	}
 
 	@Override
